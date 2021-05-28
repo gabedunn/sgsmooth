@@ -26,7 +26,7 @@ static const double TINY_FLOAT = 1.0e-300;
 //! comfortable array of doubles
 using float_vect = std::vector<double>;
 //! comfortable array of ints;
-using int_vect = std::vector<int>;
+using int_vect = std::vector<size_t>;
 
 /*! matrix class.
  *
@@ -65,7 +65,7 @@ public:
 // constructor with sizes
 float_mat::float_mat(const size_t rows,const size_t cols,const double defval)
         : std::vector<float_vect>(rows) {
-    int i;
+    size_t i;
     for (i = 0; i < rows; ++i) {
         (*this)[i].resize(cols, defval);
     }
@@ -108,7 +108,7 @@ float_mat::float_mat(const float_vect &v)
 void permute(float_mat &A, int_vect &idx)
 {
     int_vect i(idx.size());
-    int j,k;
+    size_t j,k;
 
     for (j = 0; j < A.nr_rows(); ++j) {
         i[j] = j;
@@ -149,11 +149,11 @@ static int partial_pivot(float_mat &A, const size_t row, const size_t col,
     int swapNum = 1;
 
     // default pivot is the current position, [row,col]
-    int pivot = row;
+    size_t pivot = row;
     double piv_elem = fabs(A[idx[row]][col]) * scale[idx[row]];
 
     // loop over possible pivots below current
-    int j;
+    size_t j;
     for (j = row + 1; j < A.nr_rows(); ++j) {
 
         const double tmp = fabs(A[idx[j]][col]) * scale[idx[j]];
@@ -188,7 +188,7 @@ static int partial_pivot(float_mat &A, const size_t row, const size_t col,
  * place.  A is not modified, and the solution, b, is returned in a. */
 static void lu_backsubst(float_mat &A, float_mat &a, bool diag=false)
 {
-    int r,c,k;
+    size_t r,c,k;
 
     for (r = (A.nr_rows() - 1); r >= 0; --r) {
         for (c = (A.nr_cols() - 1); c > r; --c) {
@@ -213,7 +213,7 @@ static void lu_backsubst(float_mat &A, float_mat &a, bool diag=false)
  * place.  A is not modified, and the solution, b, is returned in a. */
 static void lu_forwsubst(float_mat &A, float_mat &a, bool diag=true)
 {
-    int r,k,c;
+    size_t r,k,c;
     for (r = 0;r < A.nr_rows(); ++r) {
         for(c = 0; c < r; ++c) {
             for (k = 0; k < A.nr_cols(); ++k) {
@@ -248,7 +248,7 @@ static int lu_factorize(float_mat &A, int_vect &idx, double tol=TINY_FLOAT)
     }
 
     float_vect scale(A.nr_rows());  // implicit pivot scaling
-    int i,j;
+    size_t i,j;
     for (i = 0; i < A.nr_rows(); ++i) {
         double maxval = 0.0;
         for (j = 0; j < A.nr_cols(); ++j) {
@@ -263,11 +263,11 @@ static int lu_factorize(float_mat &A, int_vect &idx, double tol=TINY_FLOAT)
     }
 
     int swapNum = 1;
-    int c,r;
+    size_t c,r;
     for (c = 0; c < A.nr_cols() ; ++c) {            // loop over columns
         swapNum *= partial_pivot(A, c, c, scale, idx, tol); // bring pivot to diagonal
         for(r = 0; r < A.nr_rows(); ++r) {      //  loop over rows
-            int lim = (r < c) ? r : c;
+            size_t lim = (r < c) ? r : c;
             for (j = 0; j < lim; ++j) {
                 A[idx[r]][c] -= A[idx[r]][j] * A[idx[j]][c];
             }
@@ -288,7 +288,7 @@ static float_mat lin_solve(const float_mat &A, const float_mat &a,
     float_mat B(A);
     float_mat b(a);
     int_vect idx(B.nr_rows());
-    int j;
+    size_t j;
 
     for (j = 0; j < B.nr_rows(); ++j) {
         idx[j] = j;  // init row swap label array
@@ -323,7 +323,7 @@ static float_mat invert(const float_mat &A)
 static float_mat transpose(const float_mat &a)
 {
     float_mat res(a.nr_cols(), a.nr_rows());
-    int i,j;
+    size_t i,j;
 
     for (i = 0; i < a.nr_rows(); ++i) {
         for (j = 0; j < a.nr_cols(); ++j) {
@@ -342,7 +342,7 @@ float_mat operator *(const float_mat &a, const float_mat &b)
         return res;
     }
 
-    int i,j,k;
+    size_t i,j,k;
 
     for (i = 0; i < a.nr_rows(); ++i) {
         for (j = 0; j < b.nr_cols(); ++j) {
@@ -366,7 +366,7 @@ static float_vect sg_coeff(const float_vect &b, const size_t deg)
     float_vect res(rows);
 
     // generate input matrix for least squares fit
-    int i,j;
+    size_t i,j;
     for (i = 0; i < rows; ++i) {
         for (j = 0; j < cols; ++j) {
             A[i][j] = pow(double(i), double(j));
@@ -392,7 +392,7 @@ static float_vect sg_coeff(const float_vect &b, const size_t deg)
  * vector of size 2w+1, e.g. for w=2 b=(0,0,1,0,0). evaluating the polynome
  * yields the sg-coefficients.  at the border non symmectric vectors b are
  * used. */
-float_vect sg_smooth(const float_vect &v, const int width, const int deg)
+float_vect sg_smooth(const float_vect &v, const size_t width, const int deg)
 {
     float_vect res(v.size(), 0.0);
     if ((width < 1) || (deg < 0) || (v.size() < (2 * width + 2))) {
@@ -400,11 +400,11 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
         return res;
     }
 
-    const int window = 2 * width + 1;
-    const int endidx = v.size() - 1;
+    const size_t window = 2 * width + 1;
+    const size_t endidx = v.size() - 1;
 
     // do a regular sliding window average
-    int i,j;
+    size_t i,j;
     if (deg == 0) {
         // handle border cases first because we need different coefficients
 #if defined(_OPENMP)
@@ -466,15 +466,15 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
 
 /*! least squares fit a polynome of degree 'deg' to data in 'b'.
  *  then calculate the first derivative and return it. */
-static float_vect lsqr_fprime(const float_vect &b, const int deg)
+static float_vect lsqr_fprime(const float_vect &b, const size_t deg)
 {
-    const int rows(b.size());
-    const int cols(deg + 1);
+    const size_t rows(b.size());
+    const size_t cols(deg + 1);
     float_mat A(rows, cols);
     float_vect res(rows);
 
     // generate input matrix for least squares fit
-    int i,j;
+    size_t i,j;
     for (i = 0; i < rows; ++i) {
         for (j = 0; j < cols; ++j) {
             A[i][j] = pow(double(i), double(j));
@@ -501,7 +501,7 @@ static float_vect lsqr_fprime(const float_vect &b, const int deg)
  * In contrast to the sg_smooth function we do a brute force attempt by
  * always fitting the data to a polynome of degree 'deg' and using the
  * result. */
-float_vect sg_derivative(const float_vect &v, const int width,
+float_vect sg_derivative(const float_vect &v, const size_t width,
                          const int deg, const double h)
 {
     float_vect res(v.size(), 0.0);
@@ -510,12 +510,12 @@ float_vect sg_derivative(const float_vect &v, const int width,
         return res;
     }
 
-    const int window = 2 * width + 1;
+    const size_t window = 2 * width + 1;
 
     // handle border cases first because we do not repeat the fit
     // lower part
     float_vect b(window, 0.0);
-    int i,j;
+    size_t i,j;
 
     for (i = 0; i < window; ++i) {
         b[i] = v[i] / h;
