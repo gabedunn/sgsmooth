@@ -188,10 +188,11 @@ static int partial_pivot(float_mat &A, const size_t row, const size_t col,
  * place.  A is not modified, and the solution, b, is returned in a. */
 static void lu_backsubst(float_mat &A, float_mat &a, bool diag=false)
 {
-    size_t r,c,k;
+    int r,c;
+    size_t k;
 
-    for (r = (A.nr_rows() - 1); r >= 0; --r) {
-        for (c = (A.nr_cols() - 1); c > r; --c) {
+    for (r = ((int)A.nr_rows() - 1); r >= 0; --r) {
+        for (c = ((int)A.nr_cols() - 1); c > r; --c) {
             for (k = 0; k < A.nr_cols(); ++k) {
                 a[r][k] -= A[r][c] * a[c][k];
             }
